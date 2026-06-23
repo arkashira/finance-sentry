@@ -1,34 +1,32 @@
 import pytest
-from finance_sentry import create_app, Transaction
+from finance_sentry import FinanceSentry, ComplianceStandard, ComplianceReport
 
-def test_submit_transaction():
-    app = create_app()
-    api_key = 'test_api_key'
-    transaction = Transaction(amount=10.0, currency='USD', metadata={})
-    transaction_id = app.submit_transaction(api_key, transaction)
-    assert transaction_id == '0'
+def test_generate_compliance_report():
+    finance_sentry = FinanceSentry()
+    report = finance_sentry.generate_compliance_report(ComplianceStandard.PCI_DSS)
+    assert report.standard == ComplianceStandard.PCI_DSS
+    assert report.status == "COMPLIANT"
+    assert len(report.audit_results) == 2
 
-def test_rate_limit():
-    app = create_app()
-    api_key = 'test_api_key'
-    for _ in range(500):
-        transaction = Transaction(amount=10.0, currency='USD', metadata={})
-        app.submit_transaction(api_key, transaction)
+def test_generate_compliance_report_disabled():
+    finance_sentry = FinanceSentry()
+    finance_sentry.customize_compliance_settings(ComplianceStandard.PCI_DSS, False)
+    with pytest.raises(ValueError):
+        finance_sentry.generate_compliance_report(ComplianceStandard.PCI_DSS)
 
-    with pytest.raises(Exception):
-        transaction = Transaction(amount=10.0, currency='USD', metadata={})
-        app.submit_transaction(api_key, transaction)
+def test_perform_audit():
+    finance_sentry = FinanceSentry()
+    audit_results = finance_sentry.perform_audit(ComplianceStandard.PCI_DSS)
+    assert len(audit_results) == 2
 
-def test_handle_request():
-    app = create_app()
-    api_key = 'test_api_key'
-    data = {'amount': '10.0', 'currency': 'USD'}
-    transaction_id = app.handle_request(api_key, data)
-    assert transaction_id == '0'
+def test_customize_compliance_settings():
+    finance_sentry = FinanceSentry()
+    finance_sentry.customize_compliance_settings(ComplianceStandard.PCI_DSS, False)
+    assert finance_sentry.compliance_settings[ComplianceStandard.PCI_DSS] == False
 
-def test_handle_request_invalid_data():
-    app = create_app()
-    api_key = 'test_api_key'
-    data = {'amount': 'invalid', 'currency': 'USD'}
-    with pytest.raises(Exception):
-        app.handle_request(api_key, data)
+def test_get_compliance_reports():
+    finance_sentry = FinanceSentry()
+    finance_sentry.generate_compliance_report(ComplianceStandard.PCI_DSS)
+    reports = finance_sentry.get_compliance_reports()
+    assert len(reports) == 1
+    assert reports[0].standard == ComplianceStandard.PCI_DSS

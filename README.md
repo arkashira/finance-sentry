@@ -1,13 +1,11 @@
 # Finance Sentry
 
-A simple REST API to submit transactions.
+Finance Sentry is a Python project that provides a simple implementation of a finance sentry system. It includes a `FinanceSentry` class that generates compliance reports and performs audits based on predefined compliance standards.
 
 ## Usage
 
-1. Create an instance of the `FinanceSentry` class.
-2. Use the `submit_transaction` method to submit a transaction.
-3. Use the `handle_request` method to handle incoming requests.
+To use the `FinanceSentry` class, create an instance and call the `generate_compliance_report` method with the desired compliance standard.
 
 ## Testing
 
-Run the tests using `pytest`.
+To run the tests, use the `pytest` command.

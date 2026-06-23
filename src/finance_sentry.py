@@ -1,47 +1,44 @@
 import json
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Dict
+from enum import Enum
+from typing import List
+
+class ComplianceStandard(Enum):
+    PCI_DSS = "PCI-DSS"
+    GDPR = "GDPR"
 
 @dataclass
-class Transaction:
-    amount: float
-    currency: str
-    metadata: Dict[str, str]
+class ComplianceReport:
+    standard: ComplianceStandard
+    status: str
+    audit_results: List[str]
 
 class FinanceSentry:
     def __init__(self):
-        self.transactions = {}
-        self.api_keys = {}
-        self.rate_limit = 500  # req/min per API key
-        self.window = timedelta(minutes=1)
+        self.compliance_settings = {
+            ComplianceStandard.PCI_DSS: True,
+            ComplianceStandard.GDPR: True
+        }
+        self.compliance_reports = []
 
-    def submit_transaction(self, api_key: str, transaction: Transaction) -> str:
-        if api_key not in self.api_keys:
-            self.api_keys[api_key] = {'requests': [], 'limit': self.rate_limit}
+    def generate_compliance_report(self, standard: ComplianceStandard):
+        if self.compliance_settings[standard]:
+            audit_results = self.perform_audit(standard)
+            report = ComplianceReport(standard, "COMPLIANT" if audit_results else "NON-COMPLIANT", audit_results)
+            self.compliance_reports.append(report)
+            return report
+        else:
+            raise ValueError("Compliance setting is disabled")
 
-        now = datetime.now()
-        self.api_keys[api_key]['requests'] = [req for req in self.api_keys[api_key]['requests'] if now - req < self.window]
+    def perform_audit(self, standard: ComplianceStandard):
+        # Simulate audit results for demonstration purposes
+        if standard == ComplianceStandard.PCI_DSS:
+            return ["PCI-DSS audit result 1", "PCI-DSS audit result 2"]
+        elif standard == ComplianceStandard.GDPR:
+            return ["GDPR audit result 1", "GDPR audit result 2"]
 
-        if len(self.api_keys[api_key]['requests']) >= self.api_keys[api_key]['limit']:
-            raise Exception('Rate limit exceeded')
+    def customize_compliance_settings(self, standard: ComplianceStandard, enabled: bool):
+        self.compliance_settings[standard] = enabled
 
-        transaction_id = str(len(self.transactions))
-        self.transactions[transaction_id] = transaction
-        self.api_keys[api_key]['requests'].append(now)
-
-        return transaction_id
-
-    def handle_request(self, api_key: str, data: Dict[str, str]) -> str:
-        try:
-            transaction = Transaction(
-                amount=float(data['amount']),
-                currency=data['currency'],
-                metadata=data.get('metadata', {})
-            )
-            return self.submit_transaction(api_key, transaction)
-        except Exception as e:
-            raise Exception(str(e))
-
-def create_app():
-    return FinanceSentry()
+    def get_compliance_reports(self):
+        return self.compliance_reports
