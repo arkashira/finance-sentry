@@ -1,8 +1,15 @@
-# Transaction Engine
-A simple transaction engine that processes payments and persists them to an audit log.
+# Finance Sentry
+Finance Sentry is a real-time dashboard for monitoring and alerting financial metrics.
+
+## Features
+* Displays success rate, latency, and retry counts for each metric
+* Auto-refreshes every 30 seconds
+* Sources data from Prometheus metrics
 
 ## Usage
-Create a `TransactionEngine` instance and call `process_transaction` or `process_batch` to process payments.
+1. Install the required dependencies using `poetry install`
+2. Run the application using `python -m finance_sentry`
+3. Access the dashboard at `http://localhost:8000` (default port)
 
 ## Testing
-Run `pytest` to execute the tests.
+Run the tests using `pytest`

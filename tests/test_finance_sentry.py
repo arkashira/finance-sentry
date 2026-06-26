@@ -1,32 +1,35 @@
+from finance_sentry import FinanceSentry, Metric
 import pytest
-from finance_sentry import FinanceSentry, ComplianceStandard, ComplianceReport
 
-def test_generate_compliance_report():
+def test_update_metrics():
     finance_sentry = FinanceSentry()
-    report = finance_sentry.generate_compliance_report(ComplianceStandard.PCI_DSS)
-    assert report.standard == ComplianceStandard.PCI_DSS
-    assert report.status == "COMPLIANT"
-    assert len(report.audit_results) == 2
+    metrics = {
+        'metric1': Metric(0.9, 100, 5),
+        'metric2': Metric(0.8, 200, 10)
+    }
+    finance_sentry.update_metrics(metrics)
+    assert finance_sentry.metrics == metrics
 
-def test_generate_compliance_report_disabled():
+def test_get_dashboard_data():
     finance_sentry = FinanceSentry()
-    finance_sentry.customize_compliance_settings(ComplianceStandard.PCI_DSS, False)
-    with pytest.raises(ValueError):
-        finance_sentry.generate_compliance_report(ComplianceStandard.PCI_DSS)
+    metrics = {
+        'metric1': Metric(0.9, 100, 5),
+        'metric2': Metric(0.8, 200, 10)
+    }
+    finance_sentry.update_metrics(metrics)
+    dashboard_data = finance_sentry.get_dashboard_data()
+    assert dashboard_data == {
+        'metric1': {'success_rate': 0.9, 'latency': 100, 'retry_counts': 5},
+        'metric2': {'success_rate': 0.8, 'latency': 200, 'retry_counts': 10}
+    }
 
-def test_perform_audit():
+def test_auto_refresh():
     finance_sentry = FinanceSentry()
-    audit_results = finance_sentry.perform_audit(ComplianceStandard.PCI_DSS)
-    assert len(audit_results) == 2
+    finance_sentry.auto_refresh(interval=1, max_iterations=1)
 
-def test_customize_compliance_settings():
-    finance_sentry = FinanceSentry()
-    finance_sentry.customize_compliance_settings(ComplianceStandard.PCI_DSS, False)
-    assert finance_sentry.compliance_settings[ComplianceStandard.PCI_DSS] == False
-
-def test_get_compliance_reports():
-    finance_sentry = FinanceSentry()
-    finance_sentry.generate_compliance_report(ComplianceStandard.PCI_DSS)
-    reports = finance_sentry.get_compliance_reports()
-    assert len(reports) == 1
-    assert reports[0].standard == ComplianceStandard.PCI_DSS
+def test_get_prometheus_metrics():
+    metrics = FinanceSentry.get_prometheus_metrics()
+    assert metrics == {
+        'metric1': Metric(0.9, 100, 5),
+        'metric2': Metric(0.8, 200, 10)
+    }
